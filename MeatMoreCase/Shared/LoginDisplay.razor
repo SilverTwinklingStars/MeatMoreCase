@@ -1,0 +1,15 @@
+﻿@inject IStringLocalizer<LoginDisplay> Localizer
+
+<AuthorizeView>
+    <Authorized>
+        <form method="post" action="Identity/Account/LogOut">
+            <button type="submit" class="nav-link btn btn-link text-white">@Localizer["Log out"]</button>
+        </form>
+    </Authorized>
+    <NotAuthorized>
+        <!--
+        <a href="Identity/Account/Register">Register</a>
+        -->
+        <a href="Identity/Account/Login" class="text-white">@Localizer["Log in"]</a>
+    </NotAuthorized>
+</AuthorizeView>

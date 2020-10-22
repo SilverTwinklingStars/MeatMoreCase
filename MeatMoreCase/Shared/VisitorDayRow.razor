@@ -1,0 +1,21 @@
+﻿<td>@VisitorDay.Day.Date.ToShortDateString()</td>
+<td>@VisitorDay.Visitor.LastName</td>
+<td>@VisitorDay.Visitor.FirstName</td>
+<td>@VisitorDay.Visitor.VisitType</td>
+<td>@VisitorDay.Visitor.CompanyName</td>
+<td>@VisitorDay.Visitor.LicensePlate</td>
+<td>@VisitorDay.Arrival.ToString(@"hh\:mm\:ss")</td>
+<td>@(VisitorDay.HasVisitorLeft ? VisitorDay.Departure.Value.ToString(@"hh\:mm\:ss") : Localizer["Currently in our buildings"])</td>
+<td>@VisitorDay.Duration.ToString(@"hh\:mm\:ss")</td>
+<td>
+    @if (!VisitorDay.HasVisitorLeft)
+    {
+        <MeatAndMoreButton ButtonType="button" OnClick="@(() => OnLogOffVisitor.InvokeAsync(VisitorDay))" Message="@Localizer["Log off"]" />
+    }
+</td>
+
+@code {
+    [Inject] public IStringLocalizer<VisitorDayRow> Localizer { get; set; }
+    [Parameter] public VisitorDay VisitorDay { get; set; }
+    [Parameter] public EventCallback<VisitorDay> OnLogOffVisitor { get; set; }
+}

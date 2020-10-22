@@ -1,0 +1,8 @@
+﻿<button type="@ButtonType" class="btn btn-danger @Styling" @onclick="OnClick">@Message</button>
+
+@code {
+    [Parameter] public string Message { get; set; }
+    [Parameter] public string ButtonType { get; set; }
+    [Parameter] public string Styling { get; set; }
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+}

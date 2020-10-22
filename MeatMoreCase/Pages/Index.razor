@@ -1,0 +1,35 @@
+﻿@page "/"
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <AutoHideMessage Message="@Message" AlertLevel="@AlertLevel" DoneShowing="@(() => Message = null)" Time="5" Styling="mb-3" UseSmallText="true" />
+}
+<AuthorizeView>
+    <Authorized>
+        <VisitorsOverview />
+    </Authorized>
+    <NotAuthorized>
+        <div class="row">
+            <div class="col-md-6 col-12">
+                <AddVisitor VisitorAdded="SetMessage" />
+            </div>
+            <div class="col-md-6 col-12">
+                <FindVisitor VisitorFound="SetMessage" />
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    string Message { get; set; }
+    string AlertLevel { get; set; }
+
+    private void SetMessage(VisitorResult result)
+    {
+        if (result.Visitor == null)
+            AlertLevel = "alert-danger";
+        else
+            AlertLevel = "alert-success";
+        Message = result.Message;
+    }
+} 

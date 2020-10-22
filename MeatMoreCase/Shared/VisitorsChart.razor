@@ -1,0 +1,99 @@
+﻿@using ChartJs.Blazor.ChartJS.BarChart
+@using ChartJs.Blazor.ChartJS.BarChart.Axes
+@using ChartJs.Blazor.ChartJS.Common.Axes
+@using ChartJs.Blazor.ChartJS.Common.Axes.Ticks
+@using ChartJs.Blazor.ChartJS.Common.Properties
+@using ChartJs.Blazor.ChartJS.Common.Wrappers
+@using ChartJs.Blazor.Charts
+@using ChartJs.Blazor.Util
+
+<ChartJsBarChart @ref="_barChart" Config="@_barChartConfig" />
+
+@code
+{
+    [Inject] public IStringLocalizer<VisitorsChart> Localizer { get; set; }
+    private BarConfig _barChartConfig;
+    private ChartJsBarChart _barChart;
+    private BarDataset<Int32Wrapper> _barDataSet;
+
+    protected override void OnInitialized()
+    {
+        _barChartConfig = new BarConfig
+        {
+            Options = new BarOptions
+            {
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = Localizer["Visitors grouped by duration"].Value
+                },
+                Scales = new BarScales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new BarCategoryAxis
+                        {
+                            BarPercentage = 0.5,
+                            BarThickness = BarThickness.Flex
+                        }
+                    },
+                    YAxes = new List<CartesianAxis>
+                    {
+                        new BarLinearCartesianAxis
+                        {
+                            Ticks = new LinearCartesianTicks
+                            {
+                                BeginAtZero = true,
+                                StepSize = 1
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        _barChartConfig.Data.Labels.AddRange(new[] { "[0-1[", "[1-2[", "[2-3[", "[3-4[" });
+
+        var mainColor = ColorUtil.ColorHexString(255, 91, 91);
+        var secondaryColor = ColorUtil.ColorHexString(229, 81, 81);
+        _barDataSet = new BarDataset<Int32Wrapper>
+        {
+            Label = Localizer["Visitors"].Value,
+            BackgroundColor = new[] { mainColor, mainColor, mainColor, mainColor },
+            BorderWidth = 0,
+            HoverBackgroundColor = secondaryColor,
+            HoverBorderColor = secondaryColor,
+            HoverBorderWidth = 1,
+            BorderColor = "#ffffff"
+        };
+    }
+
+    public async Task Update() => await _barChart.Update();
+
+    public void AddDataset(IEnumerable<VisitorDay> visitorDays)
+    {
+        var statistics = new List<int> { 0, 0, 0, 0 };
+        var groupedVisitorDays = visitorDays.Where(vd => vd.HasVisitorLeft).GroupBy(vd => vd.Duration.Hours).Select(g => new { Duration = g.Key, Count = g.Count() }).ToList();
+
+        groupedVisitorDays.ForEach(a =>
+        {
+            //Graph in use case only wants intervals till 4 hours.
+            if (a.Duration < 4)
+                statistics[a.Duration] = a.Count;
+        });
+
+        _barDataSet.AddRange(statistics.Wrap());
+        _barChartConfig.Data.Datasets.Add(_barDataSet);
+    }
+
+    public async Task RemoveFirstDataSet()
+    {
+        //Removing 4 items because dataset holds 4 values. We also want only one dataset showing.
+        if (_barDataSet.Data.Count > 4)
+        {
+            _barDataSet.RemoveRange(0, 4);
+        }
+
+        await Update();
+    }
+}

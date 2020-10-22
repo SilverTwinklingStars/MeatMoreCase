@@ -1,0 +1,17 @@
+﻿<div class="card @Styling">
+    @if (!string.IsNullOrEmpty(Header))
+    {
+        <h5 class="card-header">
+            @Header
+        </h5>
+    }
+    <div class="card-body">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Header { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public string Styling { get; set; }
+}

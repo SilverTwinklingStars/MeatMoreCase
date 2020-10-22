@@ -1,0 +1,39 @@
+﻿@typeparam T
+
+@if (Items == null || !Items.Any())
+{
+    <h5 class="text-center mt-2">
+        @Empty
+    </h5>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover table-centered mb-0">
+            <thead>
+                <tr>
+                    @Header
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Items)
+                {
+                    <tr>@RowTemplate(item)</tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    @Footer
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment Empty { get; set; }
+    [Parameter] public RenderFragment Header { get; set; }
+    [Parameter] public RenderFragment<T> RowTemplate { get; set; }
+    [Parameter] public RenderFragment Footer { get; set; }
+    [Parameter] public IEnumerable<T> Items { get; set; }
+}

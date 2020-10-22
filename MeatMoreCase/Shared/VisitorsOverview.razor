@@ -1,0 +1,111 @@
+﻿<Card Header="@Localizer["Visitors"]">
+    <EditForm Model="VisitorDayParameters" OnValidSubmit="SearchAndUpdateChart" class="row g-2 pb-3">
+        <div class="col-12 col-md-auto">
+            <div class="input-group">
+                <InputDate class="form-control" @bind-Value="VisitorDayParameters.Date" />
+                <div class="input-group-append">
+                    <button class="btn btn-secondary" @onclick="@(() => VisitorDayParameters.Date = null)">@Localizer["Clear filter"]</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-auto">
+            <InputSelect class="form-control" @bind-Value="VisitorDayParameters.VisitorDayState">
+                @foreach (var value in Enum.GetValues(typeof(VisitorDayState)))
+                {
+                    <option value="@value">@Localizer[value.ToString()]</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-12 col-md-auto">
+            <MeatAndMoreButton ButtonType="submit" Styling="w-100" Message="@Localizer["Search"]" />
+        </div>
+    </EditForm>
+
+    @if (VisitorDays == null)
+    {
+        <Loading Text="@Localizer["Loading visitors..."]" />
+    }
+    else if (VisitorDays.Any())
+    {
+        <Table Items="VisitorDays">
+            <Header>
+                <th>@Localizer["Date"]</th>
+                <th>@Localizer["Last name"]</th>
+                <th>@Localizer["First name"]</th>
+                <th>@Localizer["Visit type"]</th>
+                <th>@Localizer["Company"]</th>
+                <th>@Localizer["License plate"]</th>
+                <th>@Localizer["Arrival"]</th>
+                <th>@Localizer["Departure"]</th>
+                <th>@Localizer["Duration"]</th>
+                <th>@Localizer["Actions"]</th>
+            </Header>
+            <RowTemplate Context="visitorDay">
+                <VisitorDayRow VisitorDay="visitorDay" OnLogOffVisitor="LogOffVisitor" />
+            </RowTemplate>
+        </Table>
+
+    }
+    else
+    {
+        <NotFound Message="@Localizer["No visitors found"]" />
+    }
+</Card>
+
+<Card Header="Chart">
+    <VisitorsChart @ref="VisitorsChart" />
+</Card>
+
+@code {
+    [Inject] public IStringLocalizer<VisitorsOverview> Localizer { get; set; }
+    [Inject] public IVisitorDayRepository VisitorDayRepository { get; set; }
+    private IEnumerable<VisitorDay> VisitorDays { get; set; }
+    private VisitorDayParameters VisitorDayParameters { get; set; } = new VisitorDayParameters() { Includes = new string[] { nameof(VisitorDay.Visitor), nameof(VisitorDay.Day) } };
+    private VisitorsChart VisitorsChart;
+
+    protected override async Task OnInitializedAsync() => await Search();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            VisitorsChart.AddDataset(VisitorDays);
+        }
+    }
+
+    /// <summary>
+    /// Returns a list of all visitors, filtered by the parameters
+    /// </summary>
+    /// <returns></returns>
+    private async Task Search()
+    {
+        VisitorDays = await VisitorDayRepository.GetVisitorDays(VisitorDayParameters);
+    }
+
+    /// <summary>
+    /// Returns a list of all visitors and updates the chart
+    /// </summary>
+    /// <returns></returns>
+    private async Task SearchAndUpdateChart()
+    {
+        await Search();
+        VisitorsChart.AddDataset(VisitorDays);
+        await VisitorsChart.RemoveFirstDataSet();
+        await VisitorsChart.Update();
+    }
+
+    /// <summary>
+    /// Sets the value of departure time of a visitor to the current time
+    /// </summary>
+    /// <param name="visitorId"></param>
+    /// <param name="dayId"></param>
+    /// <returns></returns>
+    private async Task LogOffVisitor(VisitorDay visitorDay)
+    {
+        visitorDay.LeaveBuilding();
+        VisitorDayRepository.Update(visitorDay);
+        await VisitorDayRepository.SaveChangesAsync();
+        await SearchAndUpdateChart();
+    }
+}

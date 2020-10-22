@@ -1,0 +1,60 @@
+﻿<Card Header="@Localizer["Welcome! Register here"]">
+    <EditForm Model="NewVisitor" OnValidSubmit="HandleAddValidVisitor">
+        <div class="text-danger">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+        </div>
+
+        <InputText class="form-control mb-1" placeholder="@Localizer["Last name"]" @bind-Value="NewVisitor.LastName"  />
+
+        <InputText class="form-control mb-1" placeholder="@Localizer["First name"]" @bind-Value="NewVisitor.FirstName" />
+
+        <InputSelect class="form-control mb-1" @bind-Value="NewVisitor.VisitType">
+            @foreach (var value in Enum.GetValues(typeof(VisitType)))
+            {
+                <option value="@value">@Localizer[value.ToString()]</option>
+            }
+        </InputSelect>
+
+        <InputText class="form-control mb-1" placeholder="@Localizer["Company name"]" @bind-Value="NewVisitor.CompanyName" />
+
+        <InputText class="form-control mb-1" placeholder="@Localizer["License plate"]" @bind-Value="NewVisitor.LicensePlate" />
+
+        <MeatAndMoreButton ButtonType="submit" Styling="w-100" Message="@Localizer["Register"]" />
+    </EditForm>
+</Card>
+
+@code {
+    [Inject] public IStringLocalizer<AddVisitor> Localizer { get; set; }
+    [Inject] public IVisitorRepository VisitorRepository { get; set; }
+    [Inject] public IDayRepository DayRepository { get; set; }
+    [Inject] public IVisitorDayRepository VisitorDayRepository { get; set; }
+    [Parameter] public EventCallback<VisitorResult> VisitorAdded { get; set; }
+    private Visitor NewVisitor { get; set; } = new Visitor() { VisitType = VisitType.Visit };
+
+    async Task HandleAddValidVisitor()
+    {
+        await VisitorRepository.AddAsync(NewVisitor);
+        await VisitorRepository.SaveChangesAsync();
+
+        Day day = await DayRepository.GetDayByDate(DateTime.Now);
+        if (day == null)
+        {
+            day = new Day { Date = DateTime.Now };
+            await DayRepository.AddAsync(day);
+            await DayRepository.SaveChangesAsync();
+        }
+
+        VisitorDay visitorDay = new VisitorDay
+        {
+            Visitor = NewVisitor,
+            Day = day,
+            Arrival = DateTime.Now.TimeOfDay
+        };
+        await VisitorDayRepository.AddAsync(visitorDay);
+        await VisitorDayRepository.SaveChangesAsync();
+
+        await VisitorAdded.InvokeAsync(new VisitorResult { Visitor = NewVisitor, Message = $"{NewVisitor.LastName} {NewVisitor.FirstName} {Localizer["successfully registered"]}." });
+        NewVisitor = new Visitor() { VisitType = VisitType.Visit };
+    }
+}

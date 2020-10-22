@@ -1,0 +1,43 @@
+﻿@if (Time > 0)
+{
+    <div id="alertText" class="alert @AlertLevel fade show @Styling" role="alert">
+        <span>
+            @if (UseSmallText)
+            {
+                <small>@Message</small>
+            }
+            else
+            {
+                @Message
+            }
+        </span>
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// Message to show for a certain time.
+    /// </summary>
+    [Parameter] public string Message { get; set; }
+    [Parameter] public string Styling { get; set; }
+    [Parameter] public string AlertLevel { get; set; }
+    [Parameter] public bool UseSmallText { get; set; }
+    /// <summary>
+    /// How long the message should be displayed
+    /// </summary>
+    [Parameter] public int Time { get; set; } = 5;
+    [Parameter] public EventCallback<bool> DoneShowing { get; set; }
+
+    public async void StartTimer()
+    {
+        while (Time > 0)
+        {
+            Time--;
+            StateHasChanged();
+            await Task.Delay(1000);
+        }
+        await DoneShowing.InvokeAsync(true);
+    }
+
+    protected override void OnInitialized() => StartTimer();
+}

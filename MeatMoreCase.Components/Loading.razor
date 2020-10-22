@@ -1,0 +1,16 @@
+﻿<div class="text-center">
+    <button class="btn" disabled>
+        <span class="spinner-border spinner-border-sm text-danger mr-1" role="status" aria-hidden="true" />
+        @if (!string.IsNullOrEmpty(Text))
+        {
+            <span>@Text</span>
+        }
+    </button>
+</div>
+
+@code {
+    /// <summary>
+    /// Infotext to show when spinning
+    /// </summary>
+    [Parameter] public string Text { get; set; }
+}

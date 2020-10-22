@@ -1,0 +1,41 @@
+﻿<Card Header="@Localizer["Leaving? Checkout here"]">
+    <EditForm Model="Visitor" OnValidSubmit="LeaveBuilding">
+        <div class="text-danger">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+        </div>
+
+        <InputText class="form-control mb-1" placeholder="@Localizer["Last name"]" @bind-Value="Visitor.LastName" />
+
+        <InputText class="form-control mb-1" placeholder="@Localizer["First name"]" @bind-Value="Visitor.FirstName" />
+
+        <MeatAndMoreButton ButtonType="submit" Styling="w-100" Message="@Localizer["Leave building"]" />
+    </EditForm>
+</Card>
+
+@code {
+    [Inject] public IStringLocalizer<FindVisitor> Localizer { get; set; }
+    [Inject] public IVisitorDayRepository VisitorDayRepository { get; set; }
+    [Parameter] public EventCallback<VisitorResult> VisitorFound { get; set; }
+    private VisitorDayParameters FindVisitorDayParameters = new VisitorDayParameters() { VisitorDayState = VisitorDayState.Inside, Includes = new string[] { nameof(VisitorDay.Visitor), nameof(VisitorDay.Day) } };
+    private Visitor Visitor { get; set; } = new Visitor();
+    private VisitorDay VisitorDayInBuilding { get; set; }
+
+    private async Task LeaveBuilding()
+    {
+        FindVisitorDayParameters.LastName = Visitor.LastName;
+        FindVisitorDayParameters.FirstName = Visitor.FirstName;
+        VisitorDayInBuilding = await VisitorDayRepository.GetVisitorDay(FindVisitorDayParameters);
+        if (VisitorDayInBuilding == null)
+        {
+            await VisitorFound.InvokeAsync(new VisitorResult { Message = $"{Localizer["No visitor found for"]} {Visitor.LastName} {Visitor.FirstName}." });
+        }
+        else
+        {
+            VisitorDayInBuilding.LeaveBuilding();
+            await VisitorDayRepository.SaveChangesAsync();
+            await VisitorFound.InvokeAsync(new VisitorResult { Visitor = VisitorDayInBuilding.Visitor, Message = $"{VisitorDayInBuilding.Visitor.FirstName} {VisitorDayInBuilding.Visitor.LastName} {Localizer["successfully logged off."]}" });
+        }
+        Visitor = new Visitor();
+    }
+} 
