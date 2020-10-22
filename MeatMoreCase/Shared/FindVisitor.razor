@@ -35,7 +35,7 @@
             VisitorDayInBuilding.LeaveBuilding();
             await VisitorDayRepository.SaveChangesAsync();
             await VisitorFound.InvokeAsync(new VisitorResult { Visitor = VisitorDayInBuilding.Visitor, Message = $"{VisitorDayInBuilding.Visitor.FirstName} {VisitorDayInBuilding.Visitor.LastName} {Localizer["successfully logged off."]}" });
+            Visitor = new Visitor();
         }
-        Visitor = new Visitor();
     }
 } 
